@@ -4,11 +4,6 @@
 
 A lightweight desktop app for tracking deep work sessions from the system tray. FocusFlow helps you log study time, stay consistent with streaks and weekly goals, and review your progress with heatmaps and weekly breakdowns.
 
-## Screenshot
-
-<!-- Add a screenshot here -->
-![FocusFlow dashboard](docs/screenshot.png)
-
 ## Features
 
 - **System tray integration** — run in the background; tray icon switches between dark (idle) and coral (active session)
