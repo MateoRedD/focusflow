@@ -4,6 +4,7 @@ from datetime import date, timedelta
 import customtkinter as ctk
 
 import database
+import icons
 import settings_ui
 import theme
 
@@ -114,7 +115,15 @@ class DashboardUI(ctk.CTk):
         self._heatmap_drawing = False
         self._layout_resize_job: str | None = None
         self._heatmap_retry_count = 0
+        self._card_wraps: list[ctk.CTkFrame] = []
+        self._heatmap_card_frames: list[tuple[ctk.CTkFrame, ctk.CTkFrame]] = []
+        self._heatmap_legend_swatches: list[tuple[ctk.CTkFrame, str]] = []
+        self._heatmap_legend_labels: list[ctk.CTkLabel] = []
+        self._heatmap_col_wrappers: list[ctk.CTkFrame] = []
+        self._body_labels: list[ctk.CTkLabel] = []
         self._build_layout()
+        self.apply_theme()
+        icons.install_window_icon(self, active=self.app.is_active)
         self.protocol("WM_DELETE_WINDOW", self.app.hide_window)
 
     def _build_layout(self) -> None:
@@ -125,24 +134,26 @@ class DashboardUI(ctk.CTk):
         self._build_main()
 
     def _build_sidebar(self) -> None:
-        sidebar = ctk.CTkFrame(self, width=220, corner_radius=0, fg_color=theme.SIDEBAR)
-        sidebar.grid(row=0, column=0, sticky="nsew")
-        sidebar.grid_propagate(False)
+        self._sidebar = ctk.CTkFrame(self, width=220, corner_radius=0, fg_color=theme.SIDEBAR)
+        self._sidebar.grid(row=0, column=0, sticky="nsew")
+        self._sidebar.grid_propagate(False)
 
-        brand = ctk.CTkFrame(sidebar, fg_color="transparent")
+        brand = ctk.CTkFrame(self._sidebar, fg_color="transparent")
         brand.pack(fill="x", padx=24, pady=(28, 32))
-        ctk.CTkLabel(
+        self._brand_title = ctk.CTkLabel(
             brand,
             text=theme.APP_NAME,
             font=(theme.FONT, 22, "bold"),
             text_color=theme.PRIMARY,
-        ).pack(anchor="w")
-        ctk.CTkLabel(
+        )
+        self._brand_title.pack(anchor="w")
+        self._brand_subtitle = ctk.CTkLabel(
             brand,
             text=theme.APP_SUBTITLE,
             font=(theme.FONT, 12),
             text_color=theme.TEXT_MUTED,
-        ).pack(anchor="w", pady=(2, 0))
+        )
+        self._brand_subtitle.pack(anchor="w", pady=(2, 0))
 
         nav_items = [
             ("dashboard", "Dashboard", "◉"),
@@ -151,12 +162,12 @@ class DashboardUI(ctk.CTk):
         ]
         for key, label, icon in nav_items:
             btn = ctk.CTkButton(
-                sidebar,
+                self._sidebar,
                 text=f"  {icon}  {label}",
                 anchor="w",
                 height=42,
                 corner_radius=10,
-                fg_color="transparent",
+                fg_color=theme.SIDEBAR,
                 hover_color=theme.NAV_ACTIVE,
                 text_color=theme.TEXT_MUTED,
                 font=(theme.FONT, 14),
@@ -165,8 +176,8 @@ class DashboardUI(ctk.CTk):
             btn.pack(fill="x", padx=16, pady=4)
             self._nav_buttons[key] = btn
 
-        ctk.CTkButton(
-            sidebar,
+        self._quick_start_btn = ctk.CTkButton(
+            self._sidebar,
             text="Inicio rápido",
             height=44,
             corner_radius=12,
@@ -175,17 +186,23 @@ class DashboardUI(ctk.CTk):
             text_color=theme.TEXT_ON_PRIMARY,
             font=(theme.FONT, 14, "bold"),
             command=self.app.quick_start_from_ui,
-        ).pack(side="bottom", fill="x", padx=16, pady=(0, 6))
+        )
+        self._quick_start_btn.pack(side="bottom", fill="x", padx=16, pady=(0, 6))
 
-        ctk.CTkLabel(
-            sidebar,
+        self._shortcuts_label = ctk.CTkLabel(
+            self._sidebar,
             text="Ctrl+Shift+Q  inicio rápido\nCtrl+Shift+P  pausar\nCtrl+Shift+D  detener",
             font=(theme.FONT, 10),
             text_color=theme.TEXT_DIM,
             justify="left",
-        ).pack(side="bottom", fill="x", padx=20, pady=(0, 20))
+        )
+        self._shortcuts_label.pack(side="bottom", fill="x", padx=20, pady=(0, 20))
 
         self._highlight_nav("dashboard")
+
+    def _track_label(self, label: ctk.CTkLabel) -> ctk.CTkLabel:
+        self._body_labels.append(label)
+        return label
 
     def setup_shortcuts(self) -> None:
         shortcuts = {
@@ -213,8 +230,10 @@ class DashboardUI(ctk.CTk):
 
         self.content_scroll = ctk.CTkScrollableFrame(
             self.main,
-            fg_color="transparent",
-            corner_radius=0,
+            fg_color=theme.BG,
+            scrollbar_fg_color=theme.CARD,
+            scrollbar_button_color=theme.INPUT,
+            scrollbar_button_hover_color=theme.CARD_BORDER,
         )
         self.content_scroll.grid(row=1, column=0, sticky="nsew", padx=28, pady=(0, 24))
         self.content = self.content_scroll
@@ -232,12 +251,13 @@ class DashboardUI(ctk.CTk):
         left = ctk.CTkFrame(header, fg_color="transparent")
         left.grid(row=0, column=0, sticky="w")
 
-        ctk.CTkLabel(
+        self._streak_label = ctk.CTkLabel(
             left,
             textvariable=self.streak_var,
             font=(theme.FONT, 15, "bold"),
             text_color=theme.PRIMARY,
-        ).pack(anchor="w")
+        )
+        self._streak_label.pack(anchor="w")
 
         goal_frame = ctk.CTkFrame(left, fg_color="transparent")
         goal_frame.pack(anchor="w", pady=(6, 0), fill="x")
@@ -254,12 +274,13 @@ class DashboardUI(ctk.CTk):
         self.goal_bar.pack(side="left")
         self.goal_bar.set(0)
 
-        ctk.CTkLabel(
+        self._goal_label = ctk.CTkLabel(
             goal_frame,
             textvariable=self.goal_var,
             font=(theme.FONT, 11),
             text_color=theme.TEXT_MUTED,
-        ).pack(side="left", padx=(10, 0))
+        )
+        self._goal_label.pack(side="left", padx=(10, 0))
 
         self.start_btn = ctk.CTkButton(
             header,
@@ -367,6 +388,7 @@ class DashboardUI(ctk.CTk):
             padx=(0, 2),
             pady=(0, 3),
         )
+        self._card_wraps.append(wrapper)
         return wrapper, card
 
     def _style_action_button(self, button: ctk.CTkButton, enabled_style: dict, enabled: bool) -> None:
@@ -393,12 +415,13 @@ class DashboardUI(ctk.CTk):
         inner = ctk.CTkFrame(self.timer_card, fg_color="transparent")
         inner.pack(fill="both", expand=True, padx=28, pady=28)
 
-        ctk.CTkLabel(
+        self._timer_display_label = self._track_label(ctk.CTkLabel(
             inner,
             textvariable=self.timer_var,
             font=(theme.FONT_MONO, 52, "bold"),
             text_color=theme.TEXT,
-        ).pack(pady=(8, 12))
+        ))
+        self._timer_display_label.pack(pady=(8, 12))
 
         self.status_badge = ctk.CTkLabel(
             inner,
@@ -416,7 +439,7 @@ class DashboardUI(ctk.CTk):
         form.pack(fill="x")
         form.grid_columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(form, text="Materia", font=(theme.FONT, 12), text_color=theme.TEXT_MUTED).grid(
+        self._track_label(ctk.CTkLabel(form, text="Materia", font=(theme.FONT, 12), text_color=theme.TEXT_MUTED)).grid(
             row=0, column=0, sticky="w", pady=(0, 6)
         )
         self.subject_entry = ctk.CTkEntry(
@@ -432,7 +455,7 @@ class DashboardUI(ctk.CTk):
         )
         self.subject_entry.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 16))
 
-        ctk.CTkLabel(form, text="Nota rápida", font=(theme.FONT, 12), text_color=theme.TEXT_MUTED).grid(
+        self._track_label(ctk.CTkLabel(form, text="Nota rápida", font=(theme.FONT, 12), text_color=theme.TEXT_MUTED)).grid(
             row=2, column=0, sticky="w", pady=(0, 6)
         )
         self.note_entry = ctk.CTkEntry(
@@ -454,19 +477,19 @@ class DashboardUI(ctk.CTk):
         inner = ctk.CTkFrame(self.week_card, fg_color="transparent")
         inner.pack(fill="both", expand=True, padx=24, pady=24)
 
-        ctk.CTkLabel(
+        self._track_label(ctk.CTkLabel(
             inner,
             text="Esta semana",
             font=(theme.FONT, 16, "bold"),
             text_color=theme.TEXT,
-        ).pack(anchor="w")
+        )).pack(anchor="w")
 
-        ctk.CTkLabel(
+        self._track_label(ctk.CTkLabel(
             inner,
             textvariable=self.week_total_var,
             font=(theme.FONT, 36, "bold"),
             text_color=theme.TEXT,
-        ).pack(anchor="w", pady=(8, 20))
+        )).pack(anchor="w", pady=(8, 20))
 
         self.chart_frame = ctk.CTkFrame(inner, fg_color="transparent", height=120)
         self.chart_frame.pack(fill="x", expand=False)
@@ -504,27 +527,28 @@ class DashboardUI(ctk.CTk):
             fg_color=theme.SESSIONS_BG,
             corner_radius=12,
         )
+        self._sessions_inner = inner
         inner.pack(fill="x", padx=14, pady=14)
         inner.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(
+        self._track_label(ctk.CTkLabel(
             inner,
             text="Sesiones recientes",
             font=(theme.FONT, 16, "bold"),
             text_color=theme.TEXT,
-        ).grid(row=0, column=0, sticky="w", pady=(0, 10))
+        )).grid(row=0, column=0, sticky="w", pady=(0, 10))
 
         headers = ctk.CTkFrame(inner, fg_color="transparent")
         headers.grid(row=1, column=0, sticky="ew", pady=(0, 4))
         self._configure_session_table_columns(headers)
         for i, (title, _) in enumerate(SESSION_TABLE_COLUMNS):
-            ctk.CTkLabel(
+            self._track_label(ctk.CTkLabel(
                 headers,
                 text=title,
                 font=(theme.FONT, 11, "bold"),
                 text_color=theme.TEXT_DIM,
                 anchor="w",
-            ).grid(row=0, column=i, sticky="ew", padx=6)
+            )).grid(row=0, column=i, sticky="ew", padx=6)
 
         self.sessions_list = ctk.CTkFrame(
             inner,
@@ -539,37 +563,49 @@ class DashboardUI(ctk.CTk):
         )
         self.stats_panel_wrap.pack_forget()
 
-        self.stats_body = ctk.CTkFrame(self.stats_panel, fg_color="transparent")
+        self.stats_body = ctk.CTkFrame(self.stats_panel, fg_color=theme.BG)
         self.stats_body.pack(fill="x", padx=8, pady=8)
 
-        heatmap_section = ctk.CTkFrame(self.stats_body, fg_color="transparent")
-        heatmap_section.pack(fill="x", anchor="nw", pady=(0, 12))
+        self._heatmap_section = ctk.CTkFrame(self.stats_body, fg_color=theme.BG)
+        self._heatmap_section.pack(fill="x", anchor="nw", pady=(0, 12))
 
-        ctk.CTkLabel(
-            heatmap_section,
+        self._heatmap_activity_label = self._track_label(ctk.CTkLabel(
+            self._heatmap_section,
             text="Actividad mensual",
             font=(theme.FONT, 16, "bold"),
             text_color=theme.TEXT,
-        ).pack(anchor="w", pady=(0, 8))
+        ))
+        self._heatmap_activity_label.pack(anchor="w", pady=(0, 8))
 
-        legend = ctk.CTkFrame(heatmap_section, fg_color="transparent")
-        legend.pack(anchor="w", pady=(0, 12))
-        for label, color in [
-            ("0h", theme.HEAT_EMPTY),
-            ("1–2h", theme.HEAT_LOW),
-            ("2–4h", theme.HEAT_MED),
-            ("4h+", theme.HEAT_HIGH),
+        self._heatmap_legend = ctk.CTkFrame(self._heatmap_section, fg_color=theme.BG)
+        self._heatmap_legend.pack(anchor="w", pady=(0, 12))
+        for label, color_key in [
+            ("0h", "HEAT_EMPTY"),
+            ("1–2h", "HEAT_LOW"),
+            ("2–4h", "HEAT_MED"),
+            ("4h+", "HEAT_HIGH"),
         ]:
-            item = ctk.CTkFrame(legend, fg_color="transparent")
+            item = ctk.CTkFrame(self._heatmap_legend, fg_color=theme.BG)
             item.pack(side="left", padx=(0, 14))
-            swatch = ctk.CTkFrame(item, width=16, height=16, corner_radius=4, fg_color=color)
+            swatch = ctk.CTkFrame(
+                item,
+                width=16,
+                height=16,
+                corner_radius=4,
+                fg_color=getattr(theme, color_key),
+            )
             swatch.pack(side="left", padx=(0, 6))
             swatch.pack_propagate(False)
-            ctk.CTkLabel(item, text=label, font=(theme.FONT, 10), text_color=theme.TEXT_DIM).pack(
-                side="left"
-            )
+            self._heatmap_legend_swatches.append((swatch, color_key))
+            self._heatmap_legend_labels.append(self._track_label(ctk.CTkLabel(
+                item,
+                text=label,
+                font=(theme.FONT, 10),
+                text_color=theme.TEXT,
+            )))
+            self._heatmap_legend_labels[-1].pack(side="left")
 
-        self.heatmap_row = ctk.CTkFrame(heatmap_section, fg_color="transparent")
+        self.heatmap_row = ctk.CTkFrame(self._heatmap_section, fg_color=theme.BG)
         self.heatmap_row.pack(fill="x", expand=False)
         half_gap = theme.HEAT_MONTH_GAP // 2
         for col in range(3):
@@ -578,7 +614,8 @@ class DashboardUI(ctk.CTk):
 
         self.heatmap_months: list[tuple[ctk.CTkLabel, tk.Canvas]] = []
         for col in range(3):
-            col_wrapper = ctk.CTkFrame(self.heatmap_row, fg_color="transparent")
+            col_wrapper = ctk.CTkFrame(self.heatmap_row, fg_color=theme.BG)
+            self._heatmap_col_wrappers.append(col_wrapper)
             if col == 0:
                 padx = (0, half_gap)
             elif col == 2:
@@ -587,12 +624,12 @@ class DashboardUI(ctk.CTk):
                 padx = (half_gap, half_gap)
             col_wrapper.grid(row=0, column=col, sticky="nsew", padx=padx)
 
-            title = ctk.CTkLabel(
+            title = self._track_label(ctk.CTkLabel(
                 col_wrapper,
                 text="",
                 font=(theme.FONT, 14, "bold"),
                 text_color=theme.TEXT,
-            )
+            ))
             title.pack(anchor="w", pady=(0, 10))
 
             shadow = ctk.CTkFrame(
@@ -610,8 +647,9 @@ class DashboardUI(ctk.CTk):
                 border_color=theme.CARD_BORDER,
             )
             card.pack(fill="x", padx=(0, 2), pady=(0, 3))
+            self._heatmap_card_frames.append((shadow, card))
 
-            card_inner = ctk.CTkFrame(card, fg_color="transparent")
+            card_inner = ctk.CTkFrame(card, fg_color=theme.CARD)
             card_inner.pack(fill="x", padx=theme.HEAT_CARD_PAD, pady=theme.HEAT_CARD_PAD)
 
             canvas = tk.Canvas(
@@ -627,15 +665,15 @@ class DashboardUI(ctk.CTk):
 
         self.main.bind("<Configure>", self._on_window_resize)
 
-        breakdown_shadow = ctk.CTkFrame(
+        self._breakdown_shadow = ctk.CTkFrame(
             self.stats_body,
             fg_color=theme.CARD_SHADOW,
             corner_radius=13,
         )
-        breakdown_shadow.pack(fill="x", anchor="nw", pady=(0, 8))
+        self._breakdown_shadow.pack(fill="x", anchor="nw", pady=(0, 8))
 
         self.week_breakdown_card = ctk.CTkFrame(
-            breakdown_shadow,
+            self._breakdown_shadow,
             fg_color=theme.CARD,
             corner_radius=12,
             border_width=1,
@@ -646,12 +684,13 @@ class DashboardUI(ctk.CTk):
         breakdown_header = ctk.CTkFrame(self.week_breakdown_card, fg_color="transparent")
         breakdown_header.pack(fill="x", padx=16, pady=(14, 6))
 
-        ctk.CTkLabel(
+        self._desglose_title = self._track_label(ctk.CTkLabel(
             breakdown_header,
             text="Desglose semanal",
             font=(theme.FONT, 16, "bold"),
             text_color=theme.TEXT,
-        ).pack(anchor="w", pady=(0, 8))
+        ))
+        self._desglose_title.pack(anchor="w", pady=(0, 8))
 
         nav_row = ctk.CTkFrame(breakdown_header, fg_color="transparent")
         nav_row.pack(fill="x")
@@ -675,18 +714,20 @@ class DashboardUI(ctk.CTk):
 
         self.week_range_var = ctk.StringVar(value="")
         self.week_total_label_var = ctk.StringVar(value="")
-        ctk.CTkLabel(
+        self._week_range_label = self._track_label(ctk.CTkLabel(
             center,
             textvariable=self.week_range_var,
             font=(theme.FONT, 11),
-            text_color=theme.TEXT_MUTED,
-        ).pack(anchor="center")
-        ctk.CTkLabel(
+            text_color=theme.TEXT,
+        ))
+        self._week_range_label.pack(anchor="center")
+        self._week_total_label = self._track_label(ctk.CTkLabel(
             center,
             textvariable=self.week_total_label_var,
             font=(theme.FONT, 13, "bold"),
-            text_color=theme.PRIMARY,
-        ).pack(anchor="center")
+            text_color=theme.TEXT,
+        ))
+        self._week_total_label.pack(anchor="center")
 
         self.week_next_btn = ctk.CTkButton(
             nav_row,
@@ -800,6 +841,8 @@ class DashboardUI(ctk.CTk):
         if not data:
             return
 
+        canvas.configure(bg=theme.CARD)
+
         gap, rows, start_y, base_label_w, left_pad, bottom_pad = self._heatmap_layout_metrics()
         radius = theme.HEAT_CELL_RADIUS
         label_w = base_label_w if show_day_labels else 0
@@ -874,6 +917,7 @@ class DashboardUI(ctk.CTk):
                 self,
                 self.app.db_path,
                 on_save=self.refresh_all,
+                on_theme_change=self.apply_theme,
             )
             return
 
@@ -903,18 +947,181 @@ class DashboardUI(ctk.CTk):
     def _highlight_nav(self, active: str) -> None:
         for key, btn in self._nav_buttons.items():
             if key == active:
-                btn.configure(fg_color=theme.NAV_ACTIVE, text_color=theme.TERTIARY_DARK)
+                btn.configure(fg_color=theme.NAV_ACTIVE, text_color=theme.NAV_ACTIVE_TEXT)
             else:
-                btn.configure(fg_color="transparent", text_color=theme.TEXT_MUTED)
+                btn.configure(fg_color=theme.SIDEBAR, text_color=theme.TEXT_MUTED)
 
-    def refresh_all(self) -> None:
-        self.refresh_streak()
+    def _sync_scrollable_frame_theme(self) -> None:
+        self.content_scroll.configure(
+            fg_color=theme.BG,
+            scrollbar_fg_color=theme.CARD,
+            scrollbar_button_color=theme.INPUT,
+            scrollbar_button_hover_color=theme.CARD_BORDER,
+        )
+        try:
+            canvas = self.content_scroll._parent_canvas
+            canvas.configure(bg=theme.BG, highlightthickness=0)
+            self.content_scroll._scrollable_frame.configure(fg_color=theme.BG)
+        except (AttributeError, tk.TclError):
+            pass
+
+    def _apply_stats_theme(self) -> None:
+        if self.stats_panel_wrap.winfo_children():
+            stats_shadow = self.stats_panel_wrap.winfo_children()[0]
+            stats_shadow.configure(fg_color=theme.BG)
+        self.stats_panel.configure(fg_color=theme.BG, border_color=theme.BG)
+        self.stats_body.configure(fg_color=theme.BG)
+        self._heatmap_section.configure(fg_color=theme.BG)
+        self._heatmap_legend.configure(fg_color=theme.BG)
+        for legend_item in self._heatmap_legend.winfo_children():
+            if isinstance(legend_item, ctk.CTkFrame):
+                legend_item.configure(fg_color=theme.BG)
+        self.heatmap_row.configure(fg_color=theme.BG)
+        for col_wrapper in self._heatmap_col_wrappers:
+            col_wrapper.configure(fg_color=theme.BG)
+        self._heatmap_activity_label.configure(text_color=theme.TEXT)
+        for lbl in self._heatmap_legend_labels:
+            lbl.configure(text_color=theme.TEXT)
+        for title, _canvas in self.heatmap_months:
+            title.configure(text_color=theme.TEXT)
+        for shadow, card in self._heatmap_card_frames:
+            shadow.configure(fg_color=theme.HEAT_CARD_SHADOW)
+            card.configure(fg_color=theme.CARD, border_color=theme.CARD_BORDER)
+            for child in card.winfo_children():
+                if isinstance(child, ctk.CTkFrame):
+                    child.configure(fg_color=theme.CARD)
+        for swatch, color_key in self._heatmap_legend_swatches:
+            swatch.configure(fg_color=getattr(theme, color_key))
+        for _title, canvas in self.heatmap_months:
+            canvas.configure(bg=theme.CARD)
+        self._breakdown_shadow.configure(fg_color=theme.CARD_SHADOW)
+        self.week_breakdown_card.configure(fg_color=theme.CARD, border_color=theme.CARD_BORDER)
+        self._desglose_title.configure(text_color=theme.TEXT)
+        self._week_range_label.configure(text_color=theme.TEXT)
+        self._week_total_label.configure(text_color=theme.TEXT)
+        self.week_prev_btn.configure(
+            fg_color=theme.INPUT,
+            hover_color=theme.CARD_BORDER,
+            text_color=theme.TEXT,
+        )
+        self.week_next_btn.configure(
+            fg_color=theme.INPUT,
+            hover_color=theme.CARD_BORDER,
+            text_color=theme.TEXT,
+        )
+
+    def _apply_body_text_theme(self) -> None:
+        muted = theme.TEXT if theme.is_dark() else theme.TEXT_MUTED
+        dim = theme.TEXT if theme.is_dark() else theme.TEXT_DIM
+        for label in self._body_labels:
+            label.configure(text_color=theme.TEXT)
+        self._brand_subtitle.configure(text_color=muted)
+        self._shortcuts_label.configure(text_color=dim)
+        self._goal_label.configure(text_color=muted)
+
+    def apply_theme(self) -> None:
+        self._hide_heatmap_tip()
+        dark = database.get_dark_mode(self.app.db_path)
+        theme.apply_theme("dark" if dark else "light")
+
+        self.configure(fg_color=theme.BG)
+        self._sidebar.configure(fg_color=theme.SIDEBAR)
+        self.main.configure(fg_color=theme.BG)
+        self._brand_title.configure(text_color=theme.PRIMARY)
+        self._quick_start_btn.configure(
+            fg_color=theme.PRIMARY,
+            hover_color=theme.PRIMARY_HOVER,
+            text_color=theme.TEXT_ON_PRIMARY,
+        )
+        self._streak_label.configure(text_color=theme.PRIMARY)
+        self.goal_bar.configure(fg_color=theme.INPUT, progress_color=theme.PRIMARY)
+
+        self.start_btn.configure(
+            fg_color=theme.PRIMARY,
+            hover_color=theme.PRIMARY_HOVER,
+            text_color=theme.TEXT_ON_PRIMARY,
+        )
+        self.pause_btn.configure(
+            fg_color=theme.PAUSE_BG,
+            hover_color=theme.INPUT,
+            text_color=theme.PAUSE_TEXT,
+        )
+        self.resume_btn.configure(
+            fg_color=theme.SECONDARY,
+            hover_color=theme.SECONDARY_HOVER,
+            text_color=theme.TEXT_ON_PRIMARY,
+        )
+        self.stop_btn.configure(
+            fg_color=theme.SUCCESS_BG,
+            hover_color=theme.SUCCESS_HOVER,
+            text_color=theme.SUCCESS,
+        )
+        self._session_btn_styles["pause"] = {
+            "fg_color": theme.PAUSE_BG,
+            "hover_color": theme.INPUT,
+            "text_color": theme.PAUSE_TEXT,
+        }
+        self._session_btn_styles["resume"] = {
+            "fg_color": theme.SECONDARY,
+            "hover_color": theme.SECONDARY_HOVER,
+            "text_color": theme.TEXT_ON_PRIMARY,
+        }
+        self._session_btn_styles["stop"] = {
+            "fg_color": theme.SUCCESS_BG,
+            "hover_color": theme.SUCCESS_HOVER,
+            "text_color": theme.SUCCESS,
+        }
+
+        for wrap in self._card_wraps:
+            if not wrap.winfo_children():
+                continue
+            shadow = wrap.winfo_children()[0]
+            if not shadow.winfo_children():
+                continue
+            card = shadow.winfo_children()[0]
+            shadow.configure(fg_color=theme.CARD_SHADOW)
+            if card is self.stats_panel:
+                card.configure(fg_color=theme.BG, border_color=theme.BG)
+            else:
+                card.configure(fg_color=theme.CARD, border_color=theme.CARD_BORDER)
+            for child in card.winfo_children():
+                if isinstance(child, ctk.CTkFrame):
+                    child.configure(fg_color=theme.SESSIONS_BG if child is self._sessions_inner else theme.CARD)
+
+        entry_style = {
+            "fg_color": theme.INPUT,
+            "border_color": theme.CARD_BORDER,
+            "text_color": theme.TEXT,
+        }
+        self.subject_entry.configure(**entry_style)
+        self.note_entry.configure(**entry_style)
+        self.status_badge.configure(fg_color=theme.INPUT, text_color=theme.TEXT)
+        self._sessions_inner.configure(fg_color=theme.SESSIONS_BG)
+        self.sessions_list.configure(fg_color=theme.SESSIONS_BG)
+        self.chart_canvas.configure(bg=theme.CARD)
+        self._sync_scrollable_frame_theme()
+        self._apply_stats_theme()
+        self._apply_body_text_theme()
+
+        nav_key = self._current_view if self._current_view in self._nav_buttons else "dashboard"
+        self._highlight_nav(nav_key)
         self.refresh_goal_progress()
         self.refresh_week_chart()
         self.refresh_sessions()
         if self._current_view == "stats":
             self.refresh_stats_panel()
         self.update_session_controls()
+        if self.app.is_active:
+            self.update_timer_display(
+                self.app.get_elapsed_seconds(),
+                self.app.session_subject,
+                True,
+                self.app.is_paused,
+            )
+
+    def refresh_all(self) -> None:
+        self.apply_theme()
+        self.refresh_streak()
 
     def refresh_streak(self) -> None:
         streak = database.update_streak_cache(db_path=self.app.db_path)
@@ -950,12 +1157,12 @@ class DashboardUI(ctk.CTk):
             y1 = height - 18
             y0 = y1 - bar_h
             if seconds:
-                color = theme.TERTIARY if i != today_idx else theme.TERTIARY_DARK
+                color = theme.CHART_BAR if i != today_idx else theme.CHART_BAR_TODAY
                 _draw_rounded_top_bar(canvas, x0, y0, x1, y1, radius=5, fill=color)
             else:
                 canvas.create_rectangle(
                     x0, y0, x1, y1,
-                    fill=theme.CARD_BORDER,
+                    fill=theme.CHART_EMPTY,
                     outline="",
                     width=0,
                 )
@@ -963,7 +1170,7 @@ class DashboardUI(ctk.CTk):
                 (x0 + x1) / 2,
                 height - 6,
                 text=DAY_LABELS[i],
-                fill=theme.TEXT_MUTED,
+                fill=theme.TEXT,
                 font=(theme.FONT, 9),
             )
 
@@ -976,12 +1183,16 @@ class DashboardUI(ctk.CTk):
             ctk.CTkLabel(
                 self.sessions_list,
                 text="Aún no hay sesiones registradas.",
-                text_color=theme.TEXT_MUTED,
+                text_color=theme.TEXT,
                 font=(theme.FONT, 13),
             ).pack(pady=20, padx=6)
             return
 
-        colors = [theme.TEXT_MUTED, theme.TEXT, theme.SECONDARY, theme.TEXT_MUTED]
+        colors = (
+            [theme.TEXT, theme.TEXT, theme.TEXT, theme.TEXT]
+            if theme.is_dark()
+            else [theme.TEXT_MUTED, theme.TEXT, theme.SECONDARY, theme.TEXT_MUTED]
+        )
         for session in sessions:
             row = ctk.CTkFrame(self.sessions_list, fg_color="transparent")
             row.pack(fill="x", pady=3)
@@ -1055,7 +1266,7 @@ class DashboardUI(ctk.CTk):
                 else theme.ACCORDION_CORAL if is_coral
                 else theme.ACCORDION_SAGE
             )
-            accent = theme.PRIMARY if is_coral else theme.SECONDARY
+            accent = theme.TEXT
 
             block = ctk.CTkFrame(self.week_accordion, fg_color="transparent")
             block.pack(fill="x", pady=4)
@@ -1090,7 +1301,7 @@ class DashboardUI(ctk.CTk):
             if is_expanded:
                 body = ctk.CTkFrame(
                     block,
-                    fg_color=theme.INPUT,
+                    fg_color=theme.ACCORDION_ROW,
                     corner_radius=10,
                     border_width=1,
                     border_color=theme.CARD_BORDER,
@@ -1102,7 +1313,7 @@ class DashboardUI(ctk.CTk):
                         body,
                         text="Sin sesiones",
                         font=(theme.FONT, 12),
-                        text_color=theme.TEXT_DIM,
+                        text_color=theme.TEXT,
                     ).pack(anchor="w", padx=14, pady=12)
                 else:
                     for session in sessions:
@@ -1122,7 +1333,7 @@ class DashboardUI(ctk.CTk):
                             row,
                             text=database.format_duration(session["duration_seconds"]),
                             font=(theme.FONT, 12, "bold"),
-                            text_color=theme.PRIMARY,
+                            text_color=theme.TEXT,
                         ).grid(row=0, column=1, sticky="e", padx=(8, 0))
 
                         if session["note"]:
@@ -1130,7 +1341,7 @@ class DashboardUI(ctk.CTk):
                                 row,
                                 text=session["note"],
                                 font=(theme.FONT, 11),
-                                text_color=theme.TEXT_MUTED,
+                                text_color=theme.TEXT,
                                 anchor="w",
                                 wraplength=480,
                             ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
@@ -1240,7 +1451,7 @@ class DashboardUI(ctk.CTk):
             self.status_badge.configure(fg_color=theme.SUCCESS_BG, text_color=theme.SUCCESS)
         else:
             self.status_var.set("Sin sesión activa")
-            self.status_badge.configure(fg_color=theme.INPUT, text_color=theme.TEXT_MUTED)
+            self.status_badge.configure(fg_color=theme.INPUT, text_color=theme.TEXT)
 
     def update_session_controls(self) -> None:
         active = self.app.is_active

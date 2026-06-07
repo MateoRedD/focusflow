@@ -56,6 +56,7 @@ def _ensure_default_settings(conn: sqlite3.Connection) -> None:
     defaults = {
         "weekly_goal_hours": str(theme.DEFAULT_WEEKLY_GOAL_HOURS),
         "inactivity_minutes": str(theme.DEFAULT_INACTIVITY_MINUTES),
+        "dark_mode": "0",
     }
     for key, value in defaults.items():
         conn.execute(
@@ -95,6 +96,14 @@ def get_inactivity_minutes(db_path: Path | None = None) -> int:
         return max(1, int(raw))
     except ValueError:
         return theme.DEFAULT_INACTIVITY_MINUTES
+
+
+def get_dark_mode(db_path: Path | None = None) -> bool:
+    return get_setting("dark_mode", "0", db_path) == "1"
+
+
+def set_dark_mode(enabled: bool, db_path: Path | None = None) -> None:
+    set_setting("dark_mode", "1" if enabled else "0", db_path)
 
 
 def get_next_free_session_subject(db_path: Path | None = None) -> str:

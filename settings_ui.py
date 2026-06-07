@@ -4,7 +4,7 @@ import database
 import theme
 
 
-def show_settings(parent: ctk.CTk, db_path, on_save) -> None:
+def show_settings(parent: ctk.CTk, db_path, on_save, on_theme_change=None) -> None:
     dialog = ctk.CTkToplevel(parent)
     dialog.title("Ajustes")
     dialog.resizable(False, False)
@@ -31,6 +31,35 @@ def show_settings(parent: ctk.CTk, db_path, on_save) -> None:
         font=(theme.FONT, 20, "bold"),
         text_color=theme.TEXT,
     ).pack(anchor="w", pady=(0, 16))
+
+    dark_row = ctk.CTkFrame(inner, fg_color="transparent")
+    dark_row.pack(fill="x", pady=(0, 18))
+
+    dark_var = ctk.BooleanVar(value=database.get_dark_mode(db_path))
+
+    def on_dark_toggle() -> None:
+        database.set_dark_mode(dark_var.get(), db_path)
+        if on_theme_change:
+            on_theme_change()
+
+    ctk.CTkLabel(
+        dark_row,
+        text="Modo oscuro / Dark mode",
+        font=(theme.FONT, 13, "bold"),
+        text_color=theme.TEXT,
+    ).pack(side="left")
+
+    ctk.CTkSwitch(
+        dark_row,
+        text="",
+        variable=dark_var,
+        command=on_dark_toggle,
+        width=46,
+        progress_color=theme.PRIMARY,
+        button_color=theme.TEXT_MUTED,
+        button_hover_color=theme.TEXT,
+        fg_color=theme.INPUT,
+    ).pack(side="right")
 
     goal_var = ctk.StringVar(value=str(database.get_weekly_goal_hours(db_path)))
     idle_var = ctk.StringVar(value=str(database.get_inactivity_minutes(db_path)))

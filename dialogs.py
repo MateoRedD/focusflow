@@ -2,40 +2,41 @@ import customtkinter as ctk
 
 import theme
 
-_VARIANTS = {
-    "info": {
-        "accent": theme.SECONDARY,
-        "icon": "✓",
-        "btn_text": "Entendido",
-        "btn_color": theme.PRIMARY,
-        "btn_hover": theme.PRIMARY_HOVER,
-        "btn_text_color": theme.TEXT_ON_PRIMARY,
-    },
-    "warning": {
-        "accent": theme.WARNING,
-        "icon": "!",
-        "btn_text": "Entendido",
-        "btn_color": theme.TERTIARY,
-        "btn_hover": theme.TERTIARY_HOVER,
-        "btn_text_color": theme.TEXT,
-    },
-    "error": {
-        "accent": theme.PRIMARY,
-        "icon": "✕",
-        "btn_text": "Cerrar",
-        "btn_color": theme.PRIMARY,
-        "btn_hover": theme.PRIMARY_HOVER,
-        "btn_text_color": theme.TEXT_ON_PRIMARY,
-    },
-    "confirm": {
-        "accent": theme.TERTIARY,
-        "icon": "?",
-        "btn_text": None,
-        "btn_color": theme.PRIMARY,
-        "btn_hover": theme.PRIMARY_HOVER,
-        "btn_text_color": theme.TEXT_ON_PRIMARY,
-    },
-}
+def _variant_styles() -> dict:
+    return {
+        "info": {
+            "accent": theme.SECONDARY,
+            "icon": "✓",
+            "btn_text": "Entendido",
+            "btn_color": theme.PRIMARY,
+            "btn_hover": theme.PRIMARY_HOVER,
+            "btn_text_color": theme.TEXT_ON_PRIMARY,
+        },
+        "warning": {
+            "accent": theme.WARNING,
+            "icon": "!",
+            "btn_text": "Entendido",
+            "btn_color": theme.TERTIARY,
+            "btn_hover": theme.TERTIARY_HOVER,
+            "btn_text_color": theme.TEXT if theme.is_dark() else theme.TEXT,
+        },
+        "error": {
+            "accent": theme.DANGER,
+            "icon": "✕",
+            "btn_text": "Cerrar",
+            "btn_color": theme.DANGER,
+            "btn_hover": theme.DANGER_HOVER,
+            "btn_text_color": theme.TEXT_ON_PRIMARY,
+        },
+        "confirm": {
+            "accent": theme.TERTIARY,
+            "icon": "?",
+            "btn_text": None,
+            "btn_color": theme.PRIMARY,
+            "btn_hover": theme.PRIMARY_HOVER,
+            "btn_text_color": theme.TEXT_ON_PRIMARY,
+        },
+    }
 
 
 def _center_over_parent(dialog: ctk.CTkToplevel, parent: ctk.CTk) -> None:
@@ -57,7 +58,7 @@ def _show_dialog(
     message: str,
     variant: str,
 ) -> None:
-    style = _VARIANTS[variant]
+    style = _variant_styles()[variant]
 
     dialog = ctk.CTkToplevel(parent)
     dialog.title("")
@@ -143,7 +144,7 @@ def _show_dialog(
 
 
 def _ask_dialog(parent: ctk.CTk, title: str, message: str) -> bool:
-    style = _VARIANTS["confirm"]
+    style = _variant_styles()["confirm"]
     result = {"value": False}
 
     dialog = ctk.CTkToplevel(parent)

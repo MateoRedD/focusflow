@@ -24,7 +24,6 @@ class StudyTrackerApp:
 
         self.idle_icon = icons.create_idle_icon()
         self.active_icon = icons.create_active_icon()
-        self.paused_icon = icons.create_paused_icon()
 
         self.is_active = False
         self.is_paused = False
@@ -176,7 +175,7 @@ class StudyTrackerApp:
         self._timer_running = True
 
         sounds.play_start()
-        self._update_tray_icon()
+        self._update_app_icon()
         self._update_tray_title()
         if self.tray_icon:
             self.tray_icon.update_menu()
@@ -205,7 +204,7 @@ class StudyTrackerApp:
                 "Tu sesión fue pausada por inactividad 😴",
             )
 
-        self._update_tray_icon()
+        self._update_app_icon()
         if self.tray_icon:
             self.tray_icon.update_menu()
         self.window.update_session_controls()
@@ -225,7 +224,7 @@ class StudyTrackerApp:
         self._inactivity_notified = False
         self._segment_start = datetime.now()
 
-        self._update_tray_icon()
+        self._update_app_icon()
         if self.tray_icon:
             self.tray_icon.update_menu()
         self.window.update_session_controls()
@@ -265,15 +264,11 @@ class StudyTrackerApp:
 
         self.window.after(5000, self._schedule_inactivity_check)
 
-    def _update_tray_icon(self) -> None:
-        if not self.tray_icon:
-            return
-        if not self.is_active:
-            self.tray_icon.icon = self.idle_icon
-        elif self.is_paused:
-            self.tray_icon.icon = self.paused_icon
-        else:
-            self.tray_icon.icon = self.active_icon
+    def _update_app_icon(self) -> None:
+        active = self.is_active
+        if self.tray_icon:
+            self.tray_icon.icon = self.active_icon if active else self.idle_icon
+        icons.apply_window_icon(self.window, active=active)
 
     def _update_tray_title(self) -> None:
         if not self.tray_icon:
@@ -325,7 +320,7 @@ class StudyTrackerApp:
         self.session_subject = ""
         self.session_note = ""
 
-        self._update_tray_icon()
+        self._update_app_icon()
         if self.tray_icon:
             self.tray_icon.title = "FocusFlow — Inactivo (clic para abrir)"
             self.tray_icon.update_menu()
@@ -392,6 +387,7 @@ class StudyTrackerApp:
 
 
 def main() -> None:
+    icons.set_windows_app_user_model_id()
     app = StudyTrackerApp()
     app.run()
 
