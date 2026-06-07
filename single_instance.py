@@ -1,5 +1,5 @@
-import socket
 import threading
+import socket
 
 PORT = 47653
 HOST = "127.0.0.1"
