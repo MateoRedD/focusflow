@@ -1,0 +1,95 @@
+"""FocusFlow soft light theme."""
+
+APP_NAME = "FocusFlow"
+APP_SUBTITLE = "Deep Work Tracker"
+
+# Design system palette
+PRIMARY = "#FF6B6B"
+PRIMARY_HOVER = "#E85555"
+SECONDARY = "#7EC8A4"
+SECONDARY_HOVER = "#6BB892"
+TERTIARY = "#C3B1E1"
+TERTIARY_HOVER = "#B09FD4"
+TERTIARY_DARK = "#6B5B95"
+
+# Backgrounds
+BG = "#F7F5F2"
+NEUTRAL = "#F7F5F2"
+SIDEBAR = "#EDEAE4"
+CARD = "#FFFFFF"
+CARD_BORDER = "#EEEBE6"
+CARD_SHADOW = "#E3E0DB"
+INPUT = "#F2F0EB"
+NAV_ACTIVE = "#E8E4F8"
+SESSIONS_BG = "#F0EDE8"
+
+# Buttons — disabled state
+BTN_DISABLED_BG = "#F5F3F0"
+BTN_DISABLED_BORDER = "#D9D5CF"
+BTN_DISABLED_TEXT = "#A8A4A0"
+
+# Heatmap levels
+HEAT_EMPTY = "#E8E2DA"
+HEAT_LOW = "#D4BBEE"
+HEAT_MED = "#A97DD4"
+HEAT_HIGH = "#6C3FA8"
+HEAT_GAP = "#F7F5F2"
+HEAT_LABEL = "#6B6560"
+HEAT_CARD_SHADOW = "#E0DBD4"
+HEAT_CELL_GAP = 4
+HEAT_CELL_MIN = 16
+HEAT_CELL_MAX = 22
+HEAT_CELL_RADIUS = 4
+HEAT_MONTH_GAP = 32
+HEAT_CARD_PAD = 20
+
+# Accordion day pill tints
+ACCORDION_CORAL = "#FFE8E8"
+ACCORDION_CORAL_ACTIVE = "#FFD4D4"
+ACCORDION_SAGE = "#E4F5EC"
+ACCORDION_SAGE_ACTIVE = "#CFEADB"
+SUCCESS_BG = "#D4EDDA"
+SUCCESS = "#155724"
+SUCCESS_HOVER = "#BFE8C9"
+PAUSE_BG = "#FFF3CD"
+PAUSE_TEXT = "#856404"
+
+DANGER = PRIMARY
+DANGER_HOVER = PRIMARY_HOVER
+WARNING = "#E8A838"
+
+# Text
+TEXT = "#2D2D2D"
+TEXT_MUTED = "#777777"
+TEXT_DIM = "#999999"
+TEXT_ON_PRIMARY = "#FFFFFF"
+
+FONT = "Segoe UI"
+FONT_MONO = "Consolas"
+
+DEFAULT_WEEKLY_GOAL_HOURS = 10
+DEFAULT_INACTIVITY_MINUTES = 10
+
+DAY_NAMES_ES = [
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+    "Domingo",
+]
+MONTH_NAMES_ES = [
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic",
+]
