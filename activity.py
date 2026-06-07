@@ -1,6 +1,6 @@
 import ctypes
-import sys
 import threading
+import sys
 from ctypes import wintypes
 
 
