@@ -24,7 +24,14 @@ A lightweight desktop app for tracking deep work sessions from the system tray. 
 - **Single-instance lock** — prevents duplicate tray icons
 - **CustomTkinter UI** — warm light and dark themes with themed dialogs
 
-## Installation
+## 📋 Requirements
+
+- **Node.js 18 or later** — [Download from nodejs.org](https://nodejs.org/)
+- **Python 3.10 or later** — required to run the app (`npm start` calls Python under the hood)
+- **Windows 10/11**
+- **npm** — included with Node.js
+
+## 🚀 Installation
 
 ### 1. Clone the repository
 
@@ -33,21 +40,53 @@ git clone https://github.com/MateoRedD/focusflow.git
 cd focusflow
 ```
 
-### 2. Install dependencies
+### 2. Install Node.js (if needed)
 
-Requires **Python 3.10+** on Windows.
+Download and install the LTS version from **[nodejs.org](https://nodejs.org/)**.  
+After installing, open a new terminal and verify:
+
+```bash
+node -v
+npm -v
+```
+
+### 3. Install dependencies
+
+This installs Node packages and Python packages (`requirements.txt`) automatically:
+
+```bash
+npm install
+```
+
+If `postinstall` fails, install Python dependencies manually:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-### 3. Run the app
+### 4. Run the app
 
 ```bash
-python main.py
+npm start
 ```
 
 FocusFlow starts in the system tray. Double-click the tray icon or use **Abrir ventana** to open the dashboard.
+
+### Optional — create a Desktop shortcut
+
+Creates a **FocusFlow** shortcut on your Desktop (no terminal window):
+
+```bash
+node create-shortcut.js
+```
+
+No npm? Use PowerShell instead:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File create-shortcut.ps1
+```
+
+You can also double-click **`FocusFlow.vbs`** or **`FocusFlow.bat`** in the project folder.
 
 ## Tech stack
 
