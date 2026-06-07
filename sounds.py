@@ -1,5 +1,5 @@
-import sys
 import threading
+import sys
 import time
 
 
